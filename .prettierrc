@@ -1,0 +1,13 @@
+{
+  "printWidth": 120,
+  "tabWidth": 4,
+  "useTabs": false,
+  "semi": true,
+  "singleQuote": true,
+  "trailingComma": "all",
+  "no-return-assign": false,
+  "array-element-newline": false,
+  "object-curly-newline": false,
+  "bracketSameLine": false,
+  "arrowParens": "avoid"
+}
