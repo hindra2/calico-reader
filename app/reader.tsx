@@ -1,6 +1,5 @@
 import { useLocalSearchParams, router } from 'expo-router';
 import EpubReader from '@/components/EpubReader';
-import { View } from 'react-native';
 
 import ReaderModal from '@/components/ReaderModal';
 import { useState } from 'react';

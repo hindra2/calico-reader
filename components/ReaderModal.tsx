@@ -1,5 +1,4 @@
-import { StatusBar } from 'expo-status-bar';
-import { Platform, Text, View, Modal, Pressable } from 'react-native';
+import { Text, View, Modal, Pressable } from 'react-native';
 import React from 'react';
 
 interface ReaderModalProps {
