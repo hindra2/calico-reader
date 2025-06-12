@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "epub-reader",
-    "slug": "epub-reader",
+    "name": "calico-reader",
+    "slug": "calico-reader",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -17,7 +17,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.teczer.epub-reader"
+      "bundleIdentifier": "com.teczer.calico-reader"
     },
     "android": {
       "edgeToEdgeEnabled": true,

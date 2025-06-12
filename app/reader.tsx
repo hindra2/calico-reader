@@ -14,5 +14,5 @@ export default function ReaderScreen() {
         return null;
     }
 
-    return <EpubReader epubUri={fileUri} onBack={handleBack} />;
+    return <EpubReader epubUri={fileUri} />;
 }
