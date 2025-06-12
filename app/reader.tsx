@@ -1,18 +1,35 @@
-// app/reader.tsx
 import { useLocalSearchParams, router } from 'expo-router';
 import EpubReader from '@/components/EpubReader';
+import { View } from 'react-native';
+
+import ReaderModal from '@/components/ReaderModal';
+import { useState } from 'react';
+import { ReaderProvider } from '@epubjs-react-native/core';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 export default function ReaderScreen() {
     const { fileUri } = useLocalSearchParams<{ fileUri: string }>();
-
-    const handleBack = () => {
-        router.back();
-    };
+    const [showModal, setShowModal] = useState(false);
 
     if (!fileUri) {
         router.back();
         return null;
     }
 
-    return <EpubReader epubUri={fileUri} />;
+    const handleBack = () => {
+        router.back();
+    };
+
+    const handleTap = () => {
+        setShowModal(!showModal);
+    };
+
+    return (
+        <GestureHandlerRootView>
+            <ReaderProvider>
+                <EpubReader epubUri={fileUri} onTapMiddle={handleTap} />
+                <ReaderModal visible={showModal} onBack={handleBack} onClose={handleTap} />
+            </ReaderProvider>
+        </GestureHandlerRootView>
+    );
 }
