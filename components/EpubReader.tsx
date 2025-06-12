@@ -14,11 +14,8 @@ interface EpubReaderProps {
 const screenHeight = Dimensions.get('screen').height;
 
 const EpubReader: React.FC<EpubReaderProps> = ({ epubUri, onTapMiddle }) => {
-    const { goNext, goPrevious, isLoading, getMeta } = useReader();
-
     const tap = Gesture.Tap()
         .onEnd(() => {
-            // The function you want to be called when tapped
             onTapMiddle?.();
         })
         .runOnJS(true);
