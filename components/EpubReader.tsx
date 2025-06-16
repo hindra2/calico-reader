@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Dimensions, View, Text } from 'react-native';
+import { Dimensions, View, Text, FlatList, Pressable } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { parseEpubMetadataWithValidation, isValidEpubFile, parseEpubMetadata } from '@/lib/epubUtil';
-import { Metadata } from '@/lib/epubTypes';
+import { Chapter } from '@/lib/epub/types';
+import { Metadata } from '@/lib/epub/types';
+import { extractToc, load } from '@/lib/epub/epub';
+import { XMLParser } from 'fast-xml-parser';
 
 interface EpubReaderProps {
     epubUri: string;
@@ -12,30 +14,70 @@ interface EpubReaderProps {
 }
 
 const screenHeight = Dimensions.get('screen').height;
+const screenWidth = Dimensions.get('screen').width;
 
 const Reader: React.FC<EpubReaderProps> = ({ epubUri, onTapMiddle }) => {
-    const [data, setData] = useState<Metadata | null>(null);
+    const [chapters, setChapters] = useState<Chapter[] | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const loadEpub = async () => {
-        const metadata = await parseEpubMetadataWithValidation(epubUri);
+        setLoading(true);
 
-        console.log(metadata);
+        const files = await load(epubUri, ['OEBPS/cover.xhtml', 'OEBPS/toc.ncx', 'OEBPS/toc.xhtml']);
+        if (!files) {
+            throw new Error('failed to load epub');
+        }
 
-        setData(metadata);
+        const tocXML = files['OEBPS/toc.ncx'];
+
+        const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '' });
+        const ncx = parser.parse(tocXML);
+        const chapters = extractToc(ncx);
+        setChapters(chapters);
+
+        setLoading(false);
     };
 
     useEffect(() => {
-        loadEpub();
-    });
+        if (epubUri) {
+            loadEpub();
+        }
+    }, [epubUri]);
 
+    // gestures
     const tap = Gesture.Tap()
-        .onEnd(() => {
-            onTapMiddle?.();
+        .onEnd(event => {
+            const { x } = event;
+
+            const leftThird = screenWidth / 3;
+            const rightThird = (screenWidth * 2) / 3;
+
+            if (x < leftThird) {
+                console.log('left tap');
+            } else if (x > rightThird) {
+                console.log('right tap');
+            } else {
+                onTapMiddle?.();
+            }
         })
         .runOnJS(true);
 
+    const swipe = Gesture.Pan()
+        .activeOffsetX([-10, 10])
+        .failOffsetY([-20, 20])
+        .onEnd(event => {
+            if (event.velocityX > 500) {
+                console.log('prev page');
+            } else if (event.velocityX < -500) {
+                console.log('next page');
+            }
+        })
+        .runOnJS(true);
+
+    const gestures = Gesture.Race(tap, swipe);
+
+    // rendering
     if (loading) {
         return (
             <SafeAreaView>
@@ -53,10 +95,17 @@ const Reader: React.FC<EpubReaderProps> = ({ epubUri, onTapMiddle }) => {
     }
 
     return (
-        <GestureDetector gesture={tap}>
-            <SafeAreaView className="flex-1">
-                <Text>HELLO</Text>
-                <Text>{data?.title}</Text>
+        <GestureDetector gesture={gestures}>
+            <SafeAreaView className="flex-1 px-10">
+                <FlatList
+                    data={chapters}
+                    keyExtractor={item => item.src}
+                    renderItem={({ item }) => (
+                        <Pressable className="py-2">
+                            <Text className="text-base">{item.title}</Text>
+                        </Pressable>
+                    )}
+                />
             </SafeAreaView>
         </GestureDetector>
     );
