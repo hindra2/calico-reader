@@ -10,10 +10,10 @@ export default function HomePage() {
     const router = useRouter();
     const [directory, setDirectory] = useState('');
 
-    const handleFileSelect = (path: string) => {
+    const handleFileSelect = (epub: Blob) => {
         router.push({
             pathname: '/reader',
-            params: { fileUri: path },
+            params: { fileUri: epub },
         });
     };
 

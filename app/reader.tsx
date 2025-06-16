@@ -3,7 +3,6 @@ import EpubReader from '@/components/EpubReader';
 
 import ReaderModal from '@/components/ReaderModal';
 import { useState } from 'react';
-import { ReaderProvider } from '@epubjs-react-native/core';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 export default function ReaderScreen() {
@@ -25,10 +24,8 @@ export default function ReaderScreen() {
 
     return (
         <GestureHandlerRootView>
-            <ReaderProvider>
-                <EpubReader epubUri={fileUri} onTapMiddle={handleTap} />
-                <ReaderModal visible={showModal} onBack={handleBack} onClose={handleTap} />
-            </ReaderProvider>
+            <EpubReader epubUri={fileUri} onTapMiddle={handleTap} />
+            <ReaderModal visible={showModal} onBack={handleBack} onClose={handleTap} />
         </GestureHandlerRootView>
     );
 }
