@@ -2,10 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { Dimensions, View, Text, FlatList, Pressable } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Chapter } from '@/lib/epub/types';
-import { Metadata } from '@/lib/epub/types';
-import { extractToc, load } from '@/lib/epub/epub';
-import { XMLParser } from 'fast-xml-parser';
 
 interface EpubReaderProps {
     epubUri: string;
@@ -17,33 +13,8 @@ const screenHeight = Dimensions.get('screen').height;
 const screenWidth = Dimensions.get('screen').width;
 
 const Reader: React.FC<EpubReaderProps> = ({ epubUri, onTapMiddle }) => {
-    const [chapters, setChapters] = useState<Chapter[] | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-
-    const loadEpub = async () => {
-        setLoading(true);
-
-        const files = await load(epubUri, ['OEBPS/cover.xhtml', 'OEBPS/toc.ncx', 'OEBPS/toc.xhtml']);
-        if (!files) {
-            throw new Error('failed to load epub');
-        }
-
-        const tocXML = files['OEBPS/toc.ncx'];
-
-        const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '' });
-        const ncx = parser.parse(tocXML);
-        const chapters = extractToc(ncx);
-        setChapters(chapters);
-
-        setLoading(false);
-    };
-
-    useEffect(() => {
-        if (epubUri) {
-            loadEpub();
-        }
-    }, [epubUri]);
 
     // gestures
     const tap = Gesture.Tap()
