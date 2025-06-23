@@ -5,6 +5,7 @@ import { Pressable, Text, View } from 'react-native';
 import DirectoryPicker from '@/components/DirectoryPicker';
 import FilePicker from '@/components/FilePicker';
 import { parseDirectory } from '@/lib/directoryUtil';
+import CalicoParser from '@/modules/CalicoParser';
 
 export default function HomePage() {
     const router = useRouter();
@@ -12,7 +13,8 @@ export default function HomePage() {
     const [test, setTest] = useState('');
 
     const nativeTest = () => {
-        setTest("Test")
+        const res = CalicoParser.hello();
+        setTest(res);
     };
 
     const handleFileSelect = (path: string) => {
@@ -29,7 +31,7 @@ export default function HomePage() {
 
     return (
         <View className="flex-1 items-center justify-center bg-white dark:bg-black">
-            <Text className="text-xl font-bold text-dark dark:text-white mb-4">Calico Reader</Text>``
+            <Text className="text-xl font-bold text-dark dark:text-white mb-4">Calico Reader</Text>
             <FilePicker className="mb-4 text-dark dark:text-white" onChange={handleFileSelect} />
             <DirectoryPicker onChange={handleSelectDir} />
             <Text className="text-dark dark:text-white">Selected Directory: {directory}</Text>
