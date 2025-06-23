@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { Pressable, Text, View } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
-import { Pressable, View, Text } from 'react-native';
 
 interface FilePickerProps {
     className: string;
@@ -10,8 +10,8 @@ interface FilePickerProps {
 const FilePicker: React.FC<FilePickerProps> = ({ className, onChange }) => {
     const pickFile = async () => {
         const result = await DocumentPicker.getDocumentAsync({
-            type: '*/*',
             copyToCacheDirectory: true,
+            type: '*/*',
         });
         if (!result.canceled) {
             const filePath = result.assets[0].uri;
