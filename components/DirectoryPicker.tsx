@@ -1,6 +1,5 @@
-import React from 'react';
-import { TouchableOpacity, Text } from 'react-native';
 import * as FileSystem from 'expo-file-system';
+import { Text, TouchableOpacity } from 'react-native';
 
 const DirectoryPicker = ({ onChange }) => {
     const pickDirectory = async () => {

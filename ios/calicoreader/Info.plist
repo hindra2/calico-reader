@@ -28,7 +28,7 @@
         <key>CFBundleURLSchemes</key>
         <array>
           <string>myapp</string>
-          <string>com.teczer.calico-reader</string>
+          <string>com.calico.reader</string>
         </array>
       </dict>
     </array>

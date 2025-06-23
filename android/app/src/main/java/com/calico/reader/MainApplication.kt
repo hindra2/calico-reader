@@ -1,4 +1,4 @@
-package com.teczer.exponativewindtypescriptboilerplate
+package com.calico.reader
 
 import android.app.Application
 import android.content.res.Configuration
