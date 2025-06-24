@@ -1,12 +1,14 @@
 import { NativeModule, requireNativeModule } from 'expo';
 
-import { CalicoParserModuleEvents } from './CalicoParser.types';
-
-declare class CalicoParserModule extends NativeModule<CalicoParserModuleEvents> {
-  PI: number;
-  hello(): string;
-  setValueAsync(value: string): Promise<void>;
+declare class CalicoParserModule extends NativeModule {
+    parseEpub(filePath: string): Promise<string>;
 }
 
-// This call loads the native module object from the JSI.
-export default requireNativeModule<CalicoParserModule>('CalicoParser');
+const nativeModule = requireNativeModule<CalicoParserModule>('CalicoParser');
+
+export default {
+    async parseEpub(filePath: string): Promise<string> {
+        const result = await nativeModule.parseEpub(filePath);
+        return result;
+    },
+};

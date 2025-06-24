@@ -25,7 +25,7 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.calico.reader"
+      "package": "com.calico.reader",
     },
     "web": {
       "bundler": "metro",

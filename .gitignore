@@ -2,6 +2,7 @@
 
 # dependencies
 node_modules/
+CLAUDE.md
 
 # Expo
 .expo/

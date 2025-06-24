@@ -1,0 +1,14 @@
+-- Merging decision tree log ---
+manifest
+ADDED from /Users/haroldindra/projects/epub-reader/modules/CalicoParser/android/src/main/AndroidManifest.xml:1:1-2:12
+INJECTED from /Users/haroldindra/projects/epub-reader/modules/CalicoParser/android/src/main/AndroidManifest.xml:1:1-2:12
+	package
+		INJECTED from /Users/haroldindra/projects/epub-reader/modules/CalicoParser/android/src/main/AndroidManifest.xml
+uses-sdk
+INJECTED from /Users/haroldindra/projects/epub-reader/modules/CalicoParser/android/src/main/AndroidManifest.xml reason: use-sdk injection requested
+INJECTED from /Users/haroldindra/projects/epub-reader/modules/CalicoParser/android/src/main/AndroidManifest.xml
+INJECTED from /Users/haroldindra/projects/epub-reader/modules/CalicoParser/android/src/main/AndroidManifest.xml
+	android:targetSdkVersion
+		INJECTED from /Users/haroldindra/projects/epub-reader/modules/CalicoParser/android/src/main/AndroidManifest.xml
+	android:minSdkVersion
+		INJECTED from /Users/haroldindra/projects/epub-reader/modules/CalicoParser/android/src/main/AndroidManifest.xml
