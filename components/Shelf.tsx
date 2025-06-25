@@ -15,6 +15,7 @@ interface BookItem {
 
 const Shelf = () => {
     const [books, setBooks] = useState<BookItem[]>([]);
+    const [selectedCards, setSelectedCards] = useState<Set<string>>(new Set());
 
     const fetchAllBooks = (): BookItem[] => {
         const rawKeys = storage.getString('books:all');
@@ -79,7 +80,25 @@ const Shelf = () => {
             className="flex w-full"
             data={books}
             keyExtractor={item => item.id}
-            renderItem={({ item }) => <BookCard metadata={item.metadata} />}
+            renderItem={({ item }) => (
+                <BookCard
+                    metadata={item.metadata}
+                    onToggleSelect={() => {
+                        setSelectedCards(prev => {
+                            const newSet = new Set(prev);
+                            if (newSet.has(item.id)) {
+                                newSet.delete(item.id);
+                            } else {
+                                newSet.add(item.id);
+                            }
+
+                            console.log(newSet);
+                            return newSet;
+                        });
+                    }}
+                    isSelected={selectedCards.has(item.id)}
+                />
+            )}
             contentContainerStyle={{ padding: 16 }}
             ItemSeparatorComponent={() => <View className="h-[1px] bg-gray-400 w-full" />}
             ListEmptyComponent={EmptyView}

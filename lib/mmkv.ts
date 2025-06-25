@@ -1,12 +1,18 @@
 import { Metadata } from '@/modules/CalicoParser';
 import * as Crypto from 'expo-crypto';
 import { MMKV } from 'react-native-mmkv';
+import { showAlert } from '@/components/ui/Alert';
 
 export const storage = new MMKV();
 
 export const importMMKV = async (metadata: Metadata) => {
     // hash title into key
     const key = await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA1, metadata.title.trim().toLowerCase());
+    if (checkDuplicateKey(key)) {
+        showAlert('Duplicate Book', 'This book already exists in your library.');
+        return;
+    }
+
     metadata.key = key;
     const value = JSON.stringify(metadata);
 
@@ -38,6 +44,10 @@ export const deleteMMKV = (key: string) => {
         const updated = list.filter(id => id !== key);
         storage.set('books:all', JSON.stringify(updated));
     }
+};
+
+export const checkDuplicateKey = (key: string): boolean => {
+    return storage.contains(key);
 };
 
 export const deleteAllBooks = () => {

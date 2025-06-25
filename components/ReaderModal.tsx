@@ -16,7 +16,14 @@ const ReaderModal: React.FC<ReaderModalProps> = ({ visible, onClose, onBack }) =
     };
 
     return (
-        <Modal visible={visible} transparent={true} animationType="fade" onRequestClose={onClose}>
+        <Modal
+            visible={visible}
+            transparent={true}
+            animationType="fade"
+            onRequestClose={onClose}
+            navigationBarTranslucent={true}
+            statusBarTranslucent={true}
+        >
             <Pressable className="flex h-full bg-gray-200 opacity-50" onPress={onClose}>
                 <View>
                     <Text>TEST</Text>
