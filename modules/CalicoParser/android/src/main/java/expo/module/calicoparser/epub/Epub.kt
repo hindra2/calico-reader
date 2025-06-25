@@ -18,4 +18,12 @@ class EpubParser {
         // throw Exception("Metadata(title=${metadata.title}, author=${metadata.author})")
         return metadata
     }
+
+    fun importMetadata(context: Context, uri: Uri): Map<String, Any?> {
+        val containerxml = zip.parseFile(context, uri, "META-INF/container.xml")
+        val rootfile = xml.parseAttribute(containerxml, "rootfile", "full-path")
+        val rootfileContent = zip.parseFile(context, uri, rootfile)
+        val metadata = normalize.buildMetadata(rootfileContent)
+        return metadata
+    }
 }

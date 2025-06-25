@@ -17,5 +17,12 @@ class CalicoParserModule : Module() {
             val uri = Uri.parse(uriString)
             epubParser.parseEpub(context, uri)
         }
+
+        AsyncFunction("importMetadata") { uriString: String ->
+            val context = appContext.reactContext ?: throw Exception("Context not available")
+            val uri = Uri.parse(uriString)
+            epubParser.importMetadata(context, uri)
+
+        }
     }
 }

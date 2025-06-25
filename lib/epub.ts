@@ -7,4 +7,9 @@ const loadEpub = async (uri: string): Promise<Metadata> => {
     return result;
 };
 
-export { loadEpub };
+const importMetadata = async (uri: string): Promise<Metadata> => {
+    const result = await CalicoParser.importMetadata(uri);
+    return result;
+};
+
+export { loadEpub, importMetadata };
