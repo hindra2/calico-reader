@@ -8,6 +8,7 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native
 import 'react-native-reanimated';
 
 import '../global.css';
+import Alert from '@/components/ui/Alert';
 
 export {
     // Catch any errors thrown by the Layout component.
@@ -55,6 +56,7 @@ function RootLayoutNav() {
                 <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                 <Stack.Screen name="reader" options={{ headerShown: false }} />
             </Stack>
+            <Alert />
         </ThemeProvider>
     );
 }
