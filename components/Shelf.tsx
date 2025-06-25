@@ -1,21 +1,25 @@
-import React, { useEffect, useState } from 'react';
 import { FlatList, View } from 'react-native';
-import { EventEmitter } from 'expo';
-import Text from './ui/Text';
+import React, { useEffect, useState } from 'react';
 
-import { Metadata } from '@/modules/CalicoParser';
-import BookCard from './BookCard';
 import { storage } from '@/lib/mmkv';
+import { Metadata } from '@/modules/CalicoParser';
 import { bookEventEmitter } from '@/lib/EventEmitter';
+
+import Text from './ui/Text';
+import BookCard from './BookCard';
 
 interface BookItem {
     id: string;
     metadata: Metadata;
 }
 
-const Shelf = () => {
+interface ShelfProps {
+    selectedCards: Set<string>;
+    toggleSelect: (id: string) => void;
+}
+
+const Shelf: React.FC<ShelfProps> = ({ selectedCards, toggleSelect }) => {
     const [books, setBooks] = useState<BookItem[]>([]);
-    const [selectedCards, setSelectedCards] = useState<Set<string>>(new Set());
 
     const fetchAllBooks = (): BookItem[] => {
         const rawKeys = storage.getString('books:all');
@@ -84,17 +88,7 @@ const Shelf = () => {
                 <BookCard
                     metadata={item.metadata}
                     onToggleSelect={() => {
-                        setSelectedCards(prev => {
-                            const newSet = new Set(prev);
-                            if (newSet.has(item.id)) {
-                                newSet.delete(item.id);
-                            } else {
-                                newSet.add(item.id);
-                            }
-
-                            console.log(newSet);
-                            return newSet;
-                        });
+                        toggleSelect(item.id);
                     }}
                     isSelected={selectedCards.has(item.id)}
                 />
