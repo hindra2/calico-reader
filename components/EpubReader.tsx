@@ -4,8 +4,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { XMLParser } from 'fast-xml-parser';
 
-import CalicoParser from '@/modules/CalicoParser';
-// import { parseEpub } from '@/modules/CalicoParser/src/CalicoParser.types';
+import { loadEpub } from '@/lib/epub';
+import { Metadata } from '@/modules/CalicoParser';
 
 interface EpubReaderProps {
     epubUri: string;
@@ -19,13 +19,12 @@ const screenWidth = Dimensions.get('screen').width;
 const Reader: React.FC<EpubReaderProps> = ({ epubUri, onTapMiddle }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [epubMetadata, setEpubMetadata] = useState<string>('');
+    const [epubMetadata, setEpubMetadata] = useState<Metadata | null>(null);
 
-    const loadEpub = useCallback(async () => {
+    const loadDocument = useCallback(async () => {
         try {
             setLoading(true);
-            const result = await CalicoParser.parseEpub(epubUri);
-            console.log('Parsed metadata:', result);
+            const result = await loadEpub(epubUri);
             setEpubMetadata(result);
         } catch (error) {
             console.error('Failed to load EPUB:', error);
@@ -36,8 +35,8 @@ const Reader: React.FC<EpubReaderProps> = ({ epubUri, onTapMiddle }) => {
     }, [epubUri]);
 
     useEffect(() => {
-        loadEpub();
-    }, [loadEpub]);
+        loadDocument();
+    }, [loadDocument]);
 
     // gestures
     const tap = Gesture.Tap()
@@ -91,7 +90,14 @@ const Reader: React.FC<EpubReaderProps> = ({ epubUri, onTapMiddle }) => {
         <GestureDetector gesture={gestures}>
             <SafeAreaView className="flex-1">
                 <ScrollView className="flex-1 px-4 py-4" showsVerticalScrollIndicator={false}>
-                    <Text>{epubMetadata}</Text>
+                    <Text>{epubMetadata?.title}</Text>
+                    <Text>{epubMetadata?.author}</Text>
+                    <Text>Genres: {epubMetadata?.genres.join('\n')}</Text>
+                    <Text>
+                        {epubMetadata?.description
+                            ? `Description: ${epubMetadata.description}`
+                            : 'No description provided'}
+                    </Text>
                 </ScrollView>
             </SafeAreaView>
         </GestureDetector>
