@@ -1,24 +1,24 @@
 import { useState } from 'react';
 import { View } from 'react-native';
-import { useRouter } from 'expo-router';
+// import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import Shelf from '@/components/Shelf';
 import { deleteMMKV } from '@/lib/mmkv';
 import Header from '@/components/Header';
 import FilePicker from '@/components/FilePicker';
-import { parseDirectory } from '@/lib/directoryUtil';
+// import { parseDirectory } from '@/lib/directoryUtil';
 import { bookEventEmitter } from '@/lib/EventEmitter';
 
 export default function HomePage() {
-    const router = useRouter();
-    const [directory, setDirectory] = useState('');
+    // const router = useRouter();
+    // const [directory, setDirectory] = useState('');
     const [selectedCards, setSelectedCards] = useState<Set<string>>(new Set());
 
-    const handleSelectDir = async (path: string) => {
-        setDirectory(path);
-        await parseDirectory(path);
-    };
+    // const handleSelectDir = async (path: string) => {
+    //     setDirectory(path);
+    //     await parseDirectory(path);
+    // };
 
     const toggleSelect = (id: string) => {
         setSelectedCards(prev => {

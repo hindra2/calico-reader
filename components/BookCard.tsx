@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { View, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
+import { View, Pressable } from 'react-native';
 import { EvilIcons } from '@expo/vector-icons';
 
-import { Metadata } from '@/modules/CalicoParser';
 import { deleteMMKV } from '@/lib/mmkv';
+import { Metadata } from '@/modules/CalicoParser';
 import { bookEventEmitter } from '@/lib/EventEmitter';
 
 import Text from './ui/Text';
@@ -15,7 +15,7 @@ interface BookCardProps {
     onToggleSelect: () => void;
 }
 
-const BookCard: React.FC<BookCardProps> = ({ metadata, isSelected, onToggleSelect }) => {
+const BookCard: React.FC<BookCardProps> = ({ isSelected, metadata, onToggleSelect }) => {
     const router = useRouter();
 
     const [isPressed, setIsPressed] = useState<boolean>(false);
