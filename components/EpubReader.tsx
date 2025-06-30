@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { Dimensions, Text, ScrollView, View, ActivityIndicator } from 'react-native';
 
+import { storage } from '@/lib/mmkv';
 import { loadEpub } from '@/lib/epub';
 import { Metadata } from '@/modules/CalicoParser';
 
@@ -23,12 +24,16 @@ const Reader: React.FC<EpubReaderProps> = ({ bookKey, onTapMiddle }) => {
     const loadDocument = useCallback(async () => {
         try {
             setLoading(true);
-            const result = await loadEpub(bookKey);
-            console.log(result);
+            const raw = await storage.getString('books:' + bookKey);
+            if (!raw) {
+                console.error('book doesnt exist');
+                return;
+            }
+            const metadata = JSON.parse(raw);
+            const result = await loadEpub(metadata.path);
             setEpubMetadata(result);
         } catch (error) {
             console.error('Failed to load EPUB:', error);
-            setError(error instanceof Error ? error.message : 'Unknown error');
         } finally {
             setLoading(false);
         }
