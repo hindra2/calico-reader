@@ -12,10 +12,10 @@ class CalicoParserModule : Module() {
     override fun definition() = ModuleDefinition {
         Name("CalicoParser")
 
-        AsyncFunction("parseEpub") { uriString: String ->
+        AsyncFunction("parseChapter") { uriString: String, chapterPath: String ->
             val context = appContext.reactContext ?: throw Exception("Context not available")
             val uri = Uri.parse(uriString)
-            epubParser.parseEpub(context, uri)
+            return@AsyncFunction epubParser.parseChapter(context, uri, chapterPath)
         }
 
         AsyncFunction("importMetadata") { uriString: String ->

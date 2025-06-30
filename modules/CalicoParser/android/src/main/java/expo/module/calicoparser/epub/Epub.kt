@@ -9,14 +9,8 @@ class EpubParser {
     private val xml = XML()
     private val normalize = Normalize()
 
-    fun parseEpub(context: Context, uri: Uri): Map<String, Any?> {
-        val cxml = zip.parseFile(context, uri, "META-INF/container.xml");
-        val rootfile = xml.parseAttribute(cxml, "rootfile", "full-path");
-        val rootfilecontent = zip.parseFile(context, uri, rootfile)
-        val metadata = normalize.buildMetadata(context, uri, rootfilecontent)
-
-        // throw Exception("Metadata(title=${metadata.title}, author=${metadata.author})")
-        return metadata
+    fun parseChapter(context: Context, uri: Uri, chapterPath: String): String {
+        return zip.parseFile(context, uri, chapterPath)
     }
 
     fun chunkEpub(context: Context, uri: Uri): Map<String, List<String>> {

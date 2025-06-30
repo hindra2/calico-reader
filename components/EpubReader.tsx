@@ -4,7 +4,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { Dimensions, Text, ScrollView, View, ActivityIndicator } from 'react-native';
 
 import { storage } from '@/lib/mmkv';
-import { loadEpub, getChunks } from '@/lib/epub';
+import { loadChapter, getChunks } from '@/lib/epub';
 import { Metadata } from '@/modules/CalicoParser';
 
 interface EpubReaderProps {
@@ -20,6 +20,7 @@ const Reader: React.FC<EpubReaderProps> = ({ bookKey, onTapMiddle }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [epubMetadata, setEpubMetadata] = useState<Metadata | null>(null);
+    const [content, setContent] = useState<string | null>(null);
 
     const loadDocument = useCallback(async () => {
         try {
@@ -32,13 +33,11 @@ const Reader: React.FC<EpubReaderProps> = ({ bookKey, onTapMiddle }) => {
             const metadata = JSON.parse(raw);
 
             if (!metadata.chunks || Object.keys(metadata.chunks).length === 0) {
-                console.log('Chunks missing — generating...');
-                const nativeChunks = await getChunks(metadata.path);
+                const chunks = await getChunks(metadata.path);
 
-                // Save updated metadata back to MMKV
                 const updatedMetadata = {
                     ...metadata,
-                    chunks: nativeChunks,
+                    chunks: chunks,
                 };
                 storage.set('books:' + bookKey, JSON.stringify(updatedMetadata));
 
@@ -47,8 +46,11 @@ const Reader: React.FC<EpubReaderProps> = ({ bookKey, onTapMiddle }) => {
                 setEpubMetadata(metadata);
             }
 
-            const result = await loadEpub(metadata.path);
-            setEpubMetadata(result);
+            const firstChunkKey = Object.keys(metadata.chunks)[0];
+            const firstChapterPath = metadata.chunks[firstChunkKey][0];
+
+            const result = await loadChapter(metadata.path, firstChapterPath);
+            setContent(result.toString());
         } catch (error) {
             console.error('Failed to load EPUB:', error);
         } finally {
@@ -122,14 +124,15 @@ const Reader: React.FC<EpubReaderProps> = ({ bookKey, onTapMiddle }) => {
         <GestureDetector gesture={gestures}>
             <SafeAreaView className="flex-1">
                 <ScrollView className="flex-1 px-4 py-4" showsVerticalScrollIndicator={false}>
-                    <Text>{epubMetadata?.title}</Text>
+                    {/* <Text>{epubMetadata?.title}</Text>
                     <Text>{epubMetadata?.author}</Text>
                     <Text>Genres: {epubMetadata?.genres.join('\n')}</Text>
                     <Text>
                         {epubMetadata?.description
                             ? `Description: ${epubMetadata.description}`
                             : 'No description provided'}
-                    </Text>
+                    </Text> */}
+                    <Text>{content}</Text>
                 </ScrollView>
             </SafeAreaView>
         </GestureDetector>
