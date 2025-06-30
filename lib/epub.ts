@@ -11,4 +11,10 @@ const importMetadata = async (uri: string): Promise<Metadata> => {
     return result;
 };
 
-export { loadEpub, importMetadata };
+const getChunks = async (uri: string): Promise<Map<String, Array<String>>> => {
+    const result = await CalicoParser.chunkEpub(uri);
+    console.log(result);
+    return result;
+};
+
+export { loadEpub, importMetadata, getChunks };

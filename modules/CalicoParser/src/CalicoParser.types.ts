@@ -10,12 +10,7 @@ interface Metadata {
 }
 
 type ChunkMap = {
-    [chunkId: string]: Chapter[];
+    [chunkId: string]: string;
 };
 
-interface Chapter {
-    id: string;
-    content: string;
-}
-
-export { Metadata, Chapter };
+export { Metadata };

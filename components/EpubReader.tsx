@@ -4,7 +4,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { Dimensions, Text, ScrollView, View, ActivityIndicator } from 'react-native';
 
 import { storage } from '@/lib/mmkv';
-import { loadEpub } from '@/lib/epub';
+import { loadEpub, getChunks } from '@/lib/epub';
 import { Metadata } from '@/modules/CalicoParser';
 
 interface EpubReaderProps {
@@ -30,6 +30,23 @@ const Reader: React.FC<EpubReaderProps> = ({ bookKey, onTapMiddle }) => {
                 return;
             }
             const metadata = JSON.parse(raw);
+
+            if (!metadata.chunks || Object.keys(metadata.chunks).length === 0) {
+                console.log('Chunks missing — generating...');
+                const nativeChunks = await getChunks(metadata.path);
+
+                // Save updated metadata back to MMKV
+                const updatedMetadata = {
+                    ...metadata,
+                    chunks: nativeChunks,
+                };
+                storage.set('books:' + bookKey, JSON.stringify(updatedMetadata));
+
+                setEpubMetadata(updatedMetadata);
+            } else {
+                setEpubMetadata(metadata);
+            }
+
             const result = await loadEpub(metadata.path);
             setEpubMetadata(result);
         } catch (error) {

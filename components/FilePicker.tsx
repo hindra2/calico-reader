@@ -26,10 +26,13 @@ const FilePicker: React.FC<FilePickerProps> = ({ className }) => {
         const name = asset.name;
         const destPath = `${FileSystem.documentDirectory}books/${name}`;
 
+        console.log('Test');
+
         await FileSystem.makeDirectoryAsync(`${FileSystem.documentDirectory}books`, { intermediates: true });
         await FileSystem.copyAsync({ from: uri, to: destPath });
 
-        const metadata = await importMetadata(destPath);
+        let metadata = await importMetadata(destPath);
+        console.log(metadata);
         metadata.path = destPath;
 
         await importMMKV(metadata);

@@ -18,4 +18,9 @@ export default {
         const result = await nativeModule.importMetadata(filePath);
         return result;
     },
+
+    async chunkEpub(filePath: string): Promise<Map<String, Array<String>>> {
+        const result = await nativeModule.chunkEpub(filePath);
+        return result;
+    },
 };
