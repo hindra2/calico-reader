@@ -21,9 +21,9 @@ const BookCard: React.FC<BookCardProps> = ({ isSelected, metadata, onToggleSelec
     const [isPressed, setIsPressed] = useState<boolean>(false);
 
     const handlePress = () => {
-        console.log('pressed book uri: ', metadata.path);
+        console.log('pressed book id: ', metadata.key);
         router.push({
-            params: { fileUri: metadata.path },
+            params: { bookKey: metadata.key },
             pathname: '/reader',
         });
     };
@@ -35,7 +35,7 @@ const BookCard: React.FC<BookCardProps> = ({ isSelected, metadata, onToggleSelec
 
     const handleDelete = async () => {
         console.log('delete book: ', metadata.title);
-        await deleteMMKV(metadata.key);
+        deleteMMKV(metadata.key);
         bookEventEmitter.emit('booksUpdated');
     };
 

@@ -1,6 +1,7 @@
-import { Metadata } from '@/modules/CalicoParser';
 import * as Crypto from 'expo-crypto';
 import { MMKV } from 'react-native-mmkv';
+
+import { Metadata } from '@/modules/CalicoParser';
 import { showAlert } from '@/components/ui/Alert';
 
 export const storage = new MMKV();
@@ -17,7 +18,7 @@ export const importMMKV = async (metadata: Metadata) => {
     const value = JSON.stringify(metadata);
 
     // add to mmkv
-    storage.set(key, value);
+    storage.set('books:' + key, value);
 
     // update books:all
     let currentList: string[] = [];
@@ -48,25 +49,4 @@ export const deleteMMKV = (key: string) => {
 
 export const checkDuplicateKey = (key: string): boolean => {
     return storage.contains(key);
-};
-
-export const deleteAllBooks = () => {
-    const rawKeys = storage.getString('books:all');
-    if (!rawKeys) {
-        console.log('no books');
-        return;
-    }
-
-    try {
-        const keys: string[] = JSON.parse(rawKeys);
-
-        for (const key of keys) {
-            storage.delete(key);
-        }
-
-        storage.delete('books:all');
-        console.log('deleted all');
-    } catch (e) {
-        console.error('failed to delete books: ', e);
-    }
 };

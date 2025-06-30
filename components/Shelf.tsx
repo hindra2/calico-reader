@@ -39,7 +39,7 @@ const Shelf: React.FC<ShelfProps> = ({ selectedCards, toggleSelect }) => {
         const books: BookItem[] = [];
 
         for (const key of keys) {
-            const rawBook = storage.getString(key);
+            const rawBook = storage.getString('books:' + key);
             if (!rawBook) {
                 continue;
             }

@@ -1,14 +1,13 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Dimensions, Text, ScrollView, View, ActivityIndicator } from 'react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import { XMLParser } from 'fast-xml-parser';
+import { Dimensions, Text, ScrollView, View, ActivityIndicator } from 'react-native';
 
 import { loadEpub } from '@/lib/epub';
 import { Metadata } from '@/modules/CalicoParser';
 
 interface EpubReaderProps {
-    epubUri: string;
+    bookKey: string;
     onBack?: () => void;
     onTapMiddle?: () => void;
 }
@@ -16,7 +15,7 @@ interface EpubReaderProps {
 const screenHeight = Dimensions.get('screen').height;
 const screenWidth = Dimensions.get('screen').width;
 
-const Reader: React.FC<EpubReaderProps> = ({ epubUri, onTapMiddle }) => {
+const Reader: React.FC<EpubReaderProps> = ({ bookKey, onTapMiddle }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [epubMetadata, setEpubMetadata] = useState<Metadata | null>(null);
@@ -24,7 +23,8 @@ const Reader: React.FC<EpubReaderProps> = ({ epubUri, onTapMiddle }) => {
     const loadDocument = useCallback(async () => {
         try {
             setLoading(true);
-            const result = await loadEpub(epubUri);
+            const result = await loadEpub(bookKey);
+            console.log(result);
             setEpubMetadata(result);
         } catch (error) {
             console.error('Failed to load EPUB:', error);
@@ -32,7 +32,7 @@ const Reader: React.FC<EpubReaderProps> = ({ epubUri, onTapMiddle }) => {
         } finally {
             setLoading(false);
         }
-    }, [epubUri]);
+    }, [bookKey]);
 
     useEffect(() => {
         loadDocument();
@@ -85,6 +85,16 @@ const Reader: React.FC<EpubReaderProps> = ({ epubUri, onTapMiddle }) => {
             </SafeAreaView>
         );
     }
+
+    // title
+    const title = () => {
+        return <View></View>;
+    };
+
+    // toc
+    const toc = () => {
+        return <View></View>;
+    };
 
     return (
         <GestureDetector gesture={gestures}>
