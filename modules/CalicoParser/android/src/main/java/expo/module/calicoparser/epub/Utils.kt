@@ -2,41 +2,111 @@ package expo.module.calicoparser.epub
 
 import android.content.Context
 import android.net.Uri
+import java.util.zip.ZipFile
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipEntry
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
 import java.io.StringReader
 import android.util.Log
+import java.io.File
+import java.io.FileOutputStream
+import java.io.InputStream
+import java.nio.charset.StandardCharsets
 
 const val MAX_CHUNK_SIZE = 100 * 1024
 
 class Zip {
-    fun parseFile(context: Context, uri: Uri, file: String): String {
-        try {
-            context.contentResolver.openInputStream(uri)?.use { inputStream ->
-                ZipInputStream(inputStream).use { zipInputStream ->
-                    var entry: ZipEntry? = zipInputStream.nextEntry
-                    while (entry != null) {
-                        val entryName = entry.name
+    data class BaseFiles (
+        val containerXml: String?,
+        val rootfileContent: String?
+    )
 
-                        if (entryName == file) {
-                            return readEntry(zipInputStream)
-                        }
-                        zipInputStream.closeEntry()
+    val xml = XML()
 
-                        entry = zipInputStream.nextEntry
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            throw Exception("Failed to parse file: ${e.message}")
+    private val zipCache = mutableMapOf<String, ZipFile>()
+    private val tempFileCache = mutableMapOf<String, File>()
+
+     fun getBaseFiles(context: Context, uri: Uri): BaseFiles {
+        val zipFile = getOrCreateZipFile(context, uri)
+
+        val containerEntry = zipFile.getEntry("META-INF/container.xml") ?: throw Exception("container.xml not found")
+
+        val containerXml = zipFile.getInputStream(containerEntry).use {
+            String(it.readBytes(), StandardCharsets.UTF_8)
         }
-        return ""
+
+        val rootfilePath = xml.parseAttribute(containerXml, "rootfile", "full-path")
+
+        val rootfileEntry = zipFile.getEntry(rootfilePath) ?: throw Exception("rootfile not found")
+
+        val rootfileContent = zipFile.getInputStream(rootfileEntry).use {
+            String(it.readBytes(), StandardCharsets.UTF_8)
+        }
+
+        return BaseFiles(containerXml, rootfileContent)
     }
 
-    fun readEntry(zipInputStream: ZipInputStream): String {
-        return zipInputStream.bufferedReader().use { it.readText() }
+    fun parseFile(context: Context, uri: Uri, filePath: String): String {
+        val zipFile = getOrCreateZipFile(context, uri)
+
+        var entry = zipFile.getEntry(filePath) ?: return ""
+
+        return zipFile.getInputStream(entry).use {
+            String(it.readBytes(), StandardCharsets.UTF_8)
+        }
+    }
+
+    fun parseMultipleFiles(context: Context, uri: Uri, filePaths: List<String>): Map<String, String> {
+        val zipFile = getOrCreateZipFile(context, uri)
+        val results = mutableMapOf<String, String>()
+
+        for (filePath in filePaths) {
+            zipFile.getEntry(filePath)?.let { entry ->
+                val content = zipFile.getInputStream(entry).use {
+                    String(it.readBytes(), StandardCharsets.UTF_8)
+                }
+
+                results[filePath] = content
+            }
+        }
+
+        return results
+    }
+
+    private fun getOrCreateZipFile(context: Context, uri: Uri): ZipFile {
+        val uriString = uri.toString()
+
+        zipCache[uriString]?.let { return it }
+
+        val tempFile = tempFileCache.getOrPut(uriString) {
+            createTempFileFromUri(context, uri)
+        }
+
+        val zipFile = ZipFile(tempFile)
+        zipCache[uriString] = zipFile
+
+        return zipFile
+    }
+
+    fun createTempFileFromUri(context: Context, uri: Uri): File {
+        val tempFile = File.createTempFile("epub_temp", ".epub", context.cacheDir)
+
+        context.contentResolver.openInputStream(uri)?.use { inputStream ->
+            FileOutputStream(tempFile).use { outputStream ->
+                inputStream.copyTo(outputStream)
+            }
+        } ?: throw Exception("Could not open input stream from URI")
+
+        return tempFile
+    }
+
+    fun clean() {
+        zipCache.values.forEach { it.close() }
+        zipCache.clear()
+
+        tempFileCache.values.forEach { it.delete() }
+        tempFileCache.clear()
     }
 }
 
@@ -99,7 +169,7 @@ class Normalize {
     private val xml = XML()
     private val zip = Zip()
 
-    fun buildMetadata(context: Context, uri: Uri, rootfileOpf: String): Map<String, Any?> {
+    fun buildMetadata(rootfileOpf: String): Map<String, Any?> {
         val title = xml.parseContent(rootfileOpf, "dc:title")
         val author = xml.parseContent(rootfileOpf, "dc:creator")
         val description = try {
@@ -211,4 +281,5 @@ class Normalize {
         }
         return result
     }
+
 }

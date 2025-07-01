@@ -4,6 +4,7 @@ import EpubReader from '@/components/EpubReader';
 import ReaderModal from '@/components/ReaderModal';
 import { useEffect, useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { cleanCache } from '@/lib/epub';
 
 export default function ReaderScreen() {
     const router = useRouter();
@@ -17,6 +18,7 @@ export default function ReaderScreen() {
     }, [bookKey]);
 
     const handleBack = () => {
+        cleanCache();
         router.back();
     };
 

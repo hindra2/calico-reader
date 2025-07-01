@@ -6,11 +6,7 @@ interface Metadata {
     coverImg?: string;
     genres: string[];
     path: string;
-    chunks: ChunkMap;
+    chunks: Record<string, string[]>;
 }
-
-type ChunkMap = {
-    [chunkId: string]: string;
-};
 
 export { Metadata };

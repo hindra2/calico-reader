@@ -2,18 +2,37 @@ import CalicoParser from '@/modules/CalicoParser';
 import { Metadata } from '@/modules/CalicoParser';
 
 const loadChapter = async (uri: string, chapterPath: string): Promise<String> => {
-    const result = await CalicoParser.parseChapter(uri, chapterPath);
+    let result = '';
+    try {
+        result = await CalicoParser.parseChapter(uri, chapterPath);
+    } catch (e) {
+        console.error(e);
+    }
     return result;
 };
 
-const importMetadata = async (uri: string): Promise<Metadata> => {
-    const result = await CalicoParser.importMetadata(uri);
+const importMetadata = async (uri: string): Promise<Metadata | null> => {
+    let result = null;
+    try {
+        result = await CalicoParser.importMetadata(uri);
+    } catch (e) {
+        console.error(e);
+    }
     return result;
 };
 
-const getChunks = async (uri: string): Promise<Map<String, Array<String>>> => {
+const parseChunk = async (uri: string, chapterPaths: Array<string>): Promise<Record<string, string>> => {
+    const result = await CalicoParser.parseChunk(uri, chapterPaths);
+    return result;
+};
+
+const getChunks = async (uri: string): Promise<Record<string, string[]>> => {
     const result = await CalicoParser.chunkEpub(uri);
     return result;
 };
 
-export { loadChapter, importMetadata, getChunks };
+const cleanCache = async (): Promise<void> => {
+    CalicoParser.clean();
+};
+
+export { loadChapter, importMetadata, getChunks, parseChunk, cleanCache };

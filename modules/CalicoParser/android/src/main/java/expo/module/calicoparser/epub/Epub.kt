@@ -13,6 +13,10 @@ class EpubParser {
         return zip.parseFile(context, uri, chapterPath)
     }
 
+    fun parseChunk(context: Context, uri: Uri, filePaths: List<String>): Map<String, String> {
+        return zip.parseMultipleFiles(context, uri, filePaths)
+    }
+
     fun chunkEpub(context: Context, uri: Uri): Map<String, List<String>> {
         val containerxml = zip.parseFile(context, uri, "META-INF/container.xml")
         val rootfile = xml.parseAttribute(containerxml, "rootfile", "full-path")
@@ -22,10 +26,17 @@ class EpubParser {
     }
 
     fun importMetadata(context: Context, uri: Uri): Map<String, Any?> {
-        val containerxml = zip.parseFile(context, uri, "META-INF/container.xml")
-        val rootfile = xml.parseAttribute(containerxml, "rootfile", "full-path")
-        val rootfileContent = zip.parseFile(context, uri, rootfile)
-        val metadata = normalize.buildMetadata(context, uri, rootfileContent)
+        val (containerXml, rootfileContent) = zip.getBaseFiles(context, uri)
+
+        if (containerXml == null || rootfileContent == null) {
+            throw Exception("Failed to find containerxml or rootfilecontent")
+        }
+
+        val metadata = normalize.buildMetadata(rootfileContent)
         return metadata
+    }
+
+    fun cleanCache() {
+        zip.clean()
     }
 }

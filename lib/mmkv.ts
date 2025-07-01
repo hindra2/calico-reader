@@ -38,6 +38,7 @@ export const importMMKV = async (metadata: Metadata) => {
 
 export const deleteMMKV = (key: string) => {
     storage.delete(key);
+    // storage.delete(`books:${key}:lastread`);
 
     const raw = storage.getString('books:all');
     if (raw) {
