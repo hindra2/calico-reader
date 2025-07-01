@@ -3,9 +3,6 @@
 # dependencies
 /node_modules/
 /modules/CalicoParser/android/build
-/android/
-/ios/
-
 # Expo
 .expo/
 dist/
