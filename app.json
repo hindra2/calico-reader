@@ -7,9 +7,7 @@
     "icon": "./assets/images/icons/Apple/App_store_1024_1x.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
-    "expo": {
-      "newArchEnabled": false
-    },
+    "newArchEnabled": false,
     "splash": {
       "image": "./assets/images/splash.png",
       "resizeMode": "contain",
@@ -22,7 +20,7 @@
     "android": {
       "edgeToEdgeEnabled": true,
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/images/icons/Android/ic_launcher_xxhdpi.png",
         "backgroundColor": "#ffffff"
       },
       "package": "com.calico.reader"
