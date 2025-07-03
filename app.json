@@ -7,7 +7,7 @@
     "icon": "./assets/images/icons/Apple/App_store_1024_1x.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": false,
+    "newArchEnabled": true,
     "splash": {
       "image": "./assets/images/splash.png",
       "resizeMode": "contain",
