@@ -7,6 +7,7 @@ interface Metadata {
     genres: string[];
     path: string;
     chunks: Record<string, string[]>;
+    readingPos: number;
 }
 
 export { Metadata };

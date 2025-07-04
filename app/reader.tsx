@@ -1,10 +1,10 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import EpubReader from '@/components/EpubReader';
-
-import ReaderModal from '@/components/ReaderModal';
+import { View } from 'react-native';
 import { useEffect, useState } from 'react';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+
 import { cleanCache } from '@/lib/epub';
+import EpubReader from '@/components/EpubReader';
+import ReaderModal from '@/components/ReaderModal';
 
 export default function ReaderScreen() {
     const router = useRouter();
@@ -27,9 +27,9 @@ export default function ReaderScreen() {
     };
 
     return (
-        <GestureHandlerRootView>
+        <View className="flex-1 h-full w-full">
             <EpubReader bookKey={bookKey} onTapMiddle={handleTap} />
             <ReaderModal visible={showModal} onBack={handleBack} onClose={handleTap} />
-        </GestureHandlerRootView>
+        </View>
     );
 }
