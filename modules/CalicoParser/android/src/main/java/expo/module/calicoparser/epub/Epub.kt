@@ -21,7 +21,13 @@ class EpubParser {
         val containerxml = zip.parseFile(context, uri, "META-INF/container.xml")
         val rootfile = xml.parseAttribute(containerxml, "rootfile", "full-path")
         val rootfileContent = zip.parseFile(context, uri, rootfile)
-        val chunks = normalize.getChunks(context, uri, rootfileContent)
+        val contentDir = if (rootfile.contains("/")) {
+       		rootfile.substringBeforeLast("/")
+        } else {
+        	""
+        }
+
+        val chunks = normalize.getChunks(context, uri, rootfileContent, contentDir)
         return chunks
     }
 

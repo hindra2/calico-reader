@@ -19,7 +19,8 @@ const val MAX_CHUNK_SIZE = 100 * 1024
 class Zip {
     data class BaseFiles (
         val containerXml: String?,
-        val rootfileContent: String?
+        val rootfileContent: String?,
+        val contentDir: String?
     )
 
     val xml = XML()
@@ -44,7 +45,13 @@ class Zip {
             String(it.readBytes(), StandardCharsets.UTF_8)
         }
 
-        return BaseFiles(containerXml, rootfileContent)
+        val contentDir = if (rootfilePath.contains("/")) {
+       		rootfilePath.substringBeforeLast("/")
+        } else {
+        	""
+        }
+
+        return BaseFiles(containerXml, rootfileContent, contentDir)
     }
 
     fun parseFile(context: Context, uri: Uri, filePath: String): String {
@@ -74,7 +81,7 @@ class Zip {
         return results
     }
 
-    private fun getOrCreateZipFile(context: Context, uri: Uri): ZipFile {
+    fun getOrCreateZipFile(context: Context, uri: Uri): ZipFile {
         val uriString = uri.toString()
 
         zipCache[uriString]?.let { return it }
@@ -191,15 +198,15 @@ class Normalize {
         )
     }
 
-    fun getChunks(context: Context, uri: Uri, rootfileOpf: String): Map<String, List<String>> {
-        val chapterPaths = extractSpineChapters(rootfileOpf)
+    fun getChunks(context: Context, uri: Uri, rootfileOpf: String, contentDir: String): Map<String, List<String>> {
+        val chapterPaths = extractSpineChapters(rootfileOpf, contentDir, context, uri)
         val entrySizes = getAllEntrySizes(context, uri)
         val chunks = chunkChapters(chapterPaths, entrySizes)
 
         return chunks
     }
 
-    fun extractSpineChapters(opf: String): List<String> {
+    fun extractSpineChapters(opf: String, contentDir: String, context: Context, uri: Uri): List<String> {
         val chapterMap = mutableMapOf<String, String>()
         val spineIds = mutableListOf<String>()
 
@@ -215,7 +222,8 @@ class Normalize {
                         val id = parser.getAttributeValue(null, "id")
                         val href = parser.getAttributeValue(null, "href")
                         if (id != null && href != null) {
-                            chapterMap[id] = href
+                        	val fullPath = resolveManifestPath(context, uri, href, contentDir)
+                            chapterMap[id] = fullPath
                         }
                     }
 
@@ -282,4 +290,20 @@ class Normalize {
         return result
     }
 
+    fun resolveManifestPath(context: Context, uri: Uri, manifestHref: String, contentDir: String): String {
+    	val zipFile = zip.getOrCreateZipFile(context, uri)
+
+     	if (zipFile.getEntry(manifestHref) != null) {
+      		return manifestHref
+      	}
+
+       	if (contentDir.isNotEmpty()) {
+        	val path = "$contentDir/$manifestHref"
+         	if (zipFile.getEntry(path) != null) {
+          		return path
+          	}
+        }
+
+        return manifestHref
+    }
 }
