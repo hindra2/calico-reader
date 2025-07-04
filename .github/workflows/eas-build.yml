@@ -1,5 +1,6 @@
-name: EAS_BUILD_LOCAL
+name: EAS Build
 
+# Trigger the workflow on push to any branch
 on:
   push:
     branches: [ '*' ]
@@ -23,15 +24,12 @@ jobs:
     - name: Install dependencies
       run: bun install --frozen-lockfile
 
-    # Install EAS CLI
-    - name: Install EAS CLI
-      run: npm add -g eas-cli
-
-    # Login EAS
-    - name: Login EAS
-      run: eas login --non-interactive
-      env:
-        EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+    # Setup Expo and EAS
+    - name: Setup Expo and EAS
+      uses: expo/expo-github-action@v8
+      with:
+        eas-version: latest
+        token: ${{ secrets.EXPO_TOKEN }}
 
     # Run EAS build
     - name: Run EAS build
