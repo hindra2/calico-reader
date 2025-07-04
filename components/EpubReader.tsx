@@ -1,8 +1,7 @@
 import WebView from 'react-native-webview';
-import { Text, ActivityIndicator } from 'react-native';
+import { Text, ActivityIndicator, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useCallback, useEffect, useState, useRef } from 'react';
-
 import { ReaderManager, ReaderState, generateWebViewHTML } from '@/lib/reader';
 
 interface EpubReaderProps {
@@ -11,24 +10,36 @@ interface EpubReaderProps {
     onTapMiddle?: () => void;
 }
 
-// const screenWidth = Dimensions.get('screen').width;
-// const screenHeight = Dimensions.get('screen').height;
+const { width, height } = Dimensions.get('window');
 
 const Reader: React.FC<EpubReaderProps> = ({ bookKey, onTapMiddle }) => {
     const webViewRef = useRef<WebView>(null);
 
-    // Consolidated state
+    // Updated state with pagination fields
     const [state, setState] = useState<ReaderState>({
         chunkCache: new Map(),
+        pageCache: new Map(), // Add page cache
         content: '',
         currChapter: 0,
         currChunk: 0,
+        currPage: 0, // Add current page
         error: null,
         loading: false,
         metadata: null,
     });
 
-    const readerManager = new ReaderManager(bookKey, state, setState);
+    const readerManager = new ReaderManager(
+        bookKey,
+        state,
+        setState,
+        { width, height }, // Pass screen dimensions
+        {
+            wordsPerPage: 250, // Will be auto-calculated
+            preserveParagraphs: true,
+            fontSize: 16,
+            lineHeight: 24,
+        },
+    );
 
     useEffect(() => {
         readerManager.loadDocument();
@@ -40,9 +51,11 @@ const Reader: React.FC<EpubReaderProps> = ({ bookKey, onTapMiddle }) => {
         }
     }, [state.metadata]);
 
+    // Updated to use page navigation instead of chapter navigation
     const handleNavigation = useCallback(
         (direction: 'next' | 'prev') => {
-            readerManager.navigateToChapter(direction);
+            readerManager.navigateToPage(direction); // Changed from navigateToChapter
+            readerManager.saveProgress(); // Save progress on each page turn
         },
         [readerManager],
     );
@@ -50,7 +63,6 @@ const Reader: React.FC<EpubReaderProps> = ({ bookKey, onTapMiddle }) => {
     const handleWebViewMessage = useCallback(
         (event: any) => {
             const message = event.nativeEvent.data;
-
             switch (message) {
                 case 'prev':
                     handleNavigation('prev');
@@ -96,8 +108,20 @@ const Reader: React.FC<EpubReaderProps> = ({ bookKey, onTapMiddle }) => {
                 showsVerticalScrollIndicator={false}
                 showsHorizontalScrollIndicator={false}
                 bounces={false}
-                scrollEnabled={true}
+                scrollEnabled={false} // Disable scrolling for page-based reading
+                overScrollMode="never" // Android: disable overscroll
+                automaticallyAdjustContentInsets={false}
+                contentInset={{ top: 0, left: 0, bottom: 0, right: 0 }}
                 renderLoading={() => <ActivityIndicator size="large" />}
+                onLoadEnd={() => {
+                    // Inject additional JavaScript to ensure no scrolling
+                    webViewRef.current?.injectJavaScript(`
+                        document.body.style.overflow = 'hidden';
+                        document.documentElement.style.overflow = 'hidden';
+                        window.scrollTo(0, 0);
+                        true;
+                    `);
+                }}
             />
         </SafeAreaView>
     );

@@ -21,7 +21,6 @@ const BookCard: React.FC<BookCardProps> = ({ isSelected, metadata, onToggleSelec
     const [isPressed, setIsPressed] = useState<boolean>(false);
 
     const handlePress = () => {
-        console.log('pressed book id: ', metadata.key);
         router.push({
             params: { bookKey: metadata.key },
             pathname: '/reader',
