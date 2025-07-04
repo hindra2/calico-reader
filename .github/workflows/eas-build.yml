@@ -25,7 +25,7 @@ jobs:
 
     # Install EAS CLI
     - name: Install EAS CLI
-      run: bun add -g @expo/eas-cli
+      run: npm add -g @expo/eas-cli
 
     # Run EAS build
     - name: Run EAS build
