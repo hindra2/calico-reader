@@ -27,6 +27,12 @@ jobs:
     - name: Install EAS CLI
       run: npm add -g eas-cli
 
+    # Login EAS
+    - name: Login EAS
+      run: eas login --non-interactive
+      env:
+      	EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
     # Run EAS build
     - name: Run EAS build
       run: eas build --profile preview --platform android --local
