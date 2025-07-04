@@ -33,4 +33,11 @@ jobs:
 
     # Run EAS build
     - name: Run EAS build
-      run: eas build --profile preview --platform android --local
+      run: eas build --profile preview --platform android --local --output ./artifacts
+
+    # Upload APK as artifact
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: android-apk
+        path: artifacts
