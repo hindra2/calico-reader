@@ -70,7 +70,7 @@ export class ReaderManager {
         const { width: screenWidth, height: screenHeight } = this.screenDimensions;
 
         const usableWidth = screenWidth;
-        const usableHeight = screenHeight;
+        const usableHeight = screenHeight - 80;
 
         const charWidth = fontSize * 0.6;
         const charPerLine = Math.floor(usableWidth / charWidth);
@@ -78,7 +78,6 @@ export class ReaderManager {
         const charactersPerPage = charPerLine * linesPerPage;
         const wordsPerPage = Math.floor(charactersPerPage / 6);
 
-        console.log('Calculated words per page:', wordsPerPage);
         return Math.max(150, Math.min(400, wordsPerPage));
     }
 

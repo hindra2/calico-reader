@@ -1,4 +1,4 @@
-import { View } from 'react-native';
+import { View, Pressable } from 'react-native';
 import { useEffect, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
@@ -18,6 +18,7 @@ export default function ReaderScreen() {
     }, [bookKey]);
 
     const handleBack = () => {
+        setShowModal(false);
         cleanCache();
         router.back();
     };
