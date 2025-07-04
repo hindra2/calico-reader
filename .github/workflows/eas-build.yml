@@ -1,43 +1,42 @@
 name: EAS Build
 
-# Trigger the workflow on push to any branch
 on:
-  push:
-    branches: [ '*' ]
+    push:
+        branches: ['*']
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+    build:
+        runs-on: ubuntu-latest
 
-    steps:
-    # Checkout the repository code
-    - name: Checkout code
-      uses: actions/checkout@v4
+        steps:
+            # Checkout the repository code
+            - name: Checkout code
+              uses: actions/checkout@v4
 
-    # Set up Bun
-    - name: Set up Bun
-      uses: oven-sh/setup-bun@v1
-      with:
-        bun-version: latest
+            # Set up Bun
+            - name: Set up Bun
+              uses: oven-sh/setup-bun@v1
+              with:
+                  bun-version: latest
 
-    # Install dependencies
-    - name: Install dependencies
-      run: bun install --frozen-lockfile
+            # Install dependencies
+            - name: Install dependencies
+              run: bun install --frozen-lockfile
 
-    # Setup Expo and EAS
-    - name: Setup Expo and EAS
-      uses: expo/expo-github-action@v8
-      with:
-        eas-version: latest
-        token: ${{ secrets.EXPO_TOKEN }}
+            # Setup Expo and EAS
+            - name: Setup Expo and EAS
+              uses: expo/expo-github-action@v8
+              with:
+                  eas-version: latest
+                  token: ${{ secrets.EXPO_TOKEN }}
 
-    # Run EAS build
-    - name: Run EAS build
-      run: eas build --profile preview --platform android --local --output ./artifacts
+            # Run EAS build
+            - name: Run EAS build
+              run: eas build --profile preview --platform android --local --output ./artifacts
 
-    # Upload APK as artifact
-    - name: Upload Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: android-apk
-        path: artifacts
+            # Upload APK as artifact
+            - name: Upload Artifact
+              uses: actions/upload-artifact@v4
+              with:
+                  name: android-apk
+                  path: artifacts/*.apk
