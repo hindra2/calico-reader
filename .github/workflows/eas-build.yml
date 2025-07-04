@@ -31,7 +31,7 @@ jobs:
     - name: Login EAS
       run: eas login --non-interactive
       env:
-      	EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
     # Run EAS build
     - name: Run EAS build
