@@ -1,8 +1,9 @@
 import WebView from 'react-native-webview';
 import { Text, ActivityIndicator, Dimensions, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import React, { useCallback, useEffect, useState, useRef } from 'react';
-import { ReaderManager, ReaderState, generateWebViewHTML } from '@/lib/reader';
+import { ReaderManager, ReaderState } from '@/lib/reader';
+import { generateHTML } from '@/lib/htmlContent';
 
 interface EpubReaderProps {
     bookKey: string;
@@ -14,133 +15,138 @@ const { width, height } = Dimensions.get('window');
 
 const Reader: React.FC<EpubReaderProps> = ({ bookKey, onTapMiddle }) => {
     const webViewRef = useRef<WebView>(null);
-    const [webViewLoaded, setWebViewLoaded] = useState(false);
+    const readerManagerRef = useRef<ReaderManager | null>(null);
+    const insets = useSafeAreaInsets();
+
+    // Add a key to force WebView re-render when content changes
+    const [webViewKey, setWebViewKey] = useState(0);
+
+    // Calculate actual available space
+    const availableWidth = width;
+    const availableHeight = height - insets.top;
 
     const [state, setState] = useState<ReaderState>({
         chunkCache: new Map(),
-        pageCache: new Map(),
-        content: '',
+        chapterContents: {},
+        chapterPaths: [],
         currChapter: 0,
         currChunk: 0,
         currPage: 0,
+        currChapterPath: '',
+        totalChapters: 0,
+        totalPagesInChapter: 0,
         error: null,
         loading: false,
         metadata: null,
     });
 
-    const readerManager = new ReaderManager(
-        bookKey,
-        state,
-        setState,
-        { width, height },
-        {
-            wordsPerPage: 250,
-            preserveParagraphs: true,
-            fontSize: 16,
-            lineHeight: 24,
-        },
-    );
-
+    // Initialize reader
     useEffect(() => {
-        readerManager.loadDocument();
+        readerManagerRef.current = new ReaderManager(bookKey, state, setState, webViewRef);
+        readerManagerRef.current.loadDocument();
     }, [bookKey]);
 
+    // Force WebView refresh when content changes
     useEffect(() => {
-        if (state.metadata) {
-            readerManager.loadProgress();
+        if (Object.keys(state.chapterContents).length > 0 && state.chapterPaths.length > 0) {
+            // Force WebView to reload with new content
+            setWebViewKey(prev => prev + 1);
         }
-    }, [state.metadata]);
+    }, [state.chapterContents, state.chapterPaths]);
 
+    // Restore saved position when metadata is loaded
     useEffect(() => {
-        setWebViewLoaded(false);
-    }, [state.content]);
+        const restorePosition = async () => {
+            if (readerManagerRef.current && state.metadata && !state.loading) {
+                await readerManagerRef.current.restorePosition();
+            }
+        };
 
-    const handleNavigation = useCallback(
-        (direction: 'next' | 'prev') => {
-            readerManager.navigateToPage(direction);
-            readerManager.saveProgress();
-        },
-        [readerManager],
-    );
+        restorePosition();
+    }, [state.metadata, state.loading]);
 
     const handleWebViewMessage = useCallback(
         (event: any) => {
-            const message = event.nativeEvent.data;
-            switch (message) {
-                case 'prev':
-                    handleNavigation('prev');
-                    break;
-                case 'next':
-                    handleNavigation('next');
-                    break;
-                case 'middle':
+            try {
+                const data = JSON.parse(event.nativeEvent.data);
+                if (data.type === 'middleTap') {
                     onTapMiddle?.();
-                    break;
+                } else {
+                    readerManagerRef.current?.handleWebViewMessage(event.nativeEvent.data);
+                }
+            } catch (error) {
+                console.error('Error parsing message:', error);
             }
         },
-        [handleNavigation, onTapMiddle],
+        [onTapMiddle],
     );
 
-    if (state.loading && !state.content) {
+    // Auto-save position when chapter or page changes
+    useEffect(() => {
+        if (readerManagerRef.current && state.currChapter >= 0 && state.currPage >= 0) {
+            readerManagerRef.current.savePosition();
+        }
+    }, [state.currChapter, state.currPage, state.currChunk]);
+
+    // Memoize the HTML to avoid unnecessary regeneration
+    const htmlContent = React.useMemo(() => {
+        if (Object.keys(state.chapterContents).length === 0 || state.chapterPaths.length === 0) {
+            return '';
+        }
+        return generateHTML(state.chapterContents, state.chapterPaths);
+    }, [state.chapterContents, state.chapterPaths]);
+
+    if (state.loading && Object.keys(state.chapterContents).length === 0) {
         return (
-            <View className="flex-1">
-                <SafeAreaView className="flex-1 justify-center items-center">
-                    <ActivityIndicator size="large" color="blue" />
-                </SafeAreaView>
-            </View>
+            <SafeAreaView className="flex-1 justify-center items-center">
+                <ActivityIndicator size="large" color="blue" />
+                <Text className="text-gray-600 mt-4">Loading book...</Text>
+            </SafeAreaView>
         );
     }
 
     if (state.error) {
         return (
-            <View className="flex-1 bg-black">
-                <SafeAreaView className="flex-1 justify-center items-center p-4">
-                    <Text className="text-red-500 text-center">{state.error}</Text>
-                </SafeAreaView>
-            </View>
+            <SafeAreaView className="flex-1 justify-center items-center p-4">
+                <Text className="text-red-500 text-center text-lg mb-4">Error loading book</Text>
+                <Text className="text-red-400 text-center">{state.error}</Text>
+            </SafeAreaView>
         );
     }
 
-    if (state.content) {
+    if (!htmlContent) {
         return (
-            <View className="flex-1 bg-black">
-                <SafeAreaView className="flex-1">
-                    {!webViewLoaded && (
-                        <View className="absolute inset-0 justify-center items-center z-10">
-                            <ActivityIndicator size="large" color="blue" />
-                        </View>
-                    )}
-
-                    <WebView
-                        ref={webViewRef}
-                        source={{ html: generateWebViewHTML(state.content) }}
-                        className="flex-1"
-                        onMessage={handleWebViewMessage}
-                        javaScriptEnabled={true}
-                        domStorageEnabled={true}
-                        startInLoadingState={false}
-                        scalesPageToFit={false}
-                        showsVerticalScrollIndicator={false}
-                        showsHorizontalScrollIndicator={false}
-                        bounces={false}
-                        scrollEnabled={false}
-                        overScrollMode="never"
-                        automaticallyAdjustContentInsets={false}
-                        contentInset={{ top: 0, left: 0, bottom: 0, right: 0 }}
-                        onLoadEnd={() => {
-                            webViewRef.current?.injectJavaScript(`
-                                document.body.style.overflow = 'hidden';
-                                document.documentElement.style.overflow = 'hidden';
-                                window.scrollTo(0, 0);
-                                true;
-                            `);
-                            setTimeout(() => setWebViewLoaded(true), 100);
-                        }}
-                    />
-                </SafeAreaView>
-            </View>
+            <SafeAreaView className="flex-1 justify-center items-center">
+                <Text className="text-gray-500">No content available</Text>
+            </SafeAreaView>
         );
     }
+
+    return (
+        <View className="flex-1 bg-white">
+            <SafeAreaView className="flex-1">
+                <WebView
+                    key={webViewKey}
+                    ref={webViewRef}
+                    source={{ html: htmlContent }}
+                    onMessage={handleWebViewMessage}
+                    className="flex-1"
+                    javaScriptEnabled={true}
+                    showsVerticalScrollIndicator={false}
+                    showsHorizontalScrollIndicator={false}
+                    scrollEnabled={false}
+                    overScrollMode="never"
+                    onError={error => {
+                        console.error('WebView error:', error);
+                        setState(prev => ({ ...prev, error: 'Failed to load content' }));
+                    }}
+                    cacheEnabled={true}
+                    domStorageEnabled={true}
+                    startInLoadingState={false}
+                />
+            </SafeAreaView>
+        </View>
+    );
 };
 
 export default Reader;
