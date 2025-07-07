@@ -47,7 +47,6 @@ export const generateHTML = (chapters: { [path: string]: string }, chapterPaths:
                 pointer-events: none;
             }
 
-
             #page-indicator {
                 text-align: center;
                 font-size: 12px;
@@ -75,6 +74,19 @@ export const generateHTML = (chapters: { [path: string]: string }, chapterPaths:
             const chapterPaths = ${JSON.stringify(chapterPaths)};
             const chapterContents = ${JSON.stringify(chapters)};
             let iframes = {};
+
+            function reportPageInfo() {
+                if (window.ReactNativeWebView) {
+                    window.ReactNativeWebView.postMessage(JSON.stringify({
+                        type: 'pageInfo',
+                        currentChapter: currentChapter,
+                        currentPage: currentPage + 1, // +1 because ReaderManager expects 1-based
+                        chapterPath: chapterPaths[currentChapter],
+                        totalChapters: totalChapters,
+                        totalPagesInChapter: totalPagesInChapter
+                    }));
+                }
+            }
 
             function createIframe(chapterIndex) {
                 console.log('Creating iframe for chapter', chapterIndex);
@@ -115,20 +127,33 @@ export const generateHTML = (chapters: { [path: string]: string }, chapterPaths:
                     return;
                 }
 
-                const width = container.offsetWidth;
-                const height = container.offsetHeight;
+                // Get the exact content dimensions (excluding padding)
+                const containerRect = container.getBoundingClientRect();
+                const width = Math.floor(containerRect.width);
+                const height = Math.floor(containerRect.height);
+
+                console.log('Container dimensions:', { width, height });
 
                 // Apply styles for column-based layout with scroll snapping
                 Object.assign(doc.body.style, {
                     columnWidth: width + 'px',
                     columnGap: '0px',
+                    columnFill: 'auto',
                     height: height + 'px',
                     margin: '0',
                     padding: '0',
                     overflowX: 'auto',
                     overflowY: 'hidden',
                     scrollSnapType: 'x mandatory', // Enable snap scrolling
-                    scrollBehavior: 'smooth',
+                    scrollBehavior: 'auto', // Changed from 'smooth' to 'auto'
+                    boxSizing: 'border-box'
+                });
+
+                // Apply consistent sizing to the document element too
+                Object.assign(doc.documentElement.style, {
+                    margin: '0',
+                    padding: '0',
+                    boxSizing: 'border-box'
                 });
 
                 // Add snapping style to children
@@ -137,29 +162,50 @@ export const generateHTML = (chapters: { [path: string]: string }, chapterPaths:
                     'body > * {' +
                         'scroll-snap-align: start;' +
                         'break-inside: avoid;' +
-                    '}';
+                    '}' +
+                    '* { box-sizing: border-box; }';
                 doc.head.appendChild(style);
 
                 // Scroll to start
                 iframe.contentWindow.scrollTo(0, 0);
 
-                // Wait for content to layout and calculate pages based on snap points
+                // Wait for content to layout and calculate pages more accurately
                 setTimeout(() => {
                     const scrollable = iframe.contentWindow.document.scrollingElement || doc.documentElement;
-                    const maxScrollLeft = scrollable.scrollWidth - scrollable.clientWidth;
-                    const pageCount = Math.round(maxScrollLeft / width) + 1;
+                    const scrollWidth = scrollable.scrollWidth;
+                    const clientWidth = scrollable.clientWidth;
 
-                    iframes[chapterIndex].pages = pageCount;
+                    console.log('Scroll dimensions:', { scrollWidth, clientWidth, width });
+
+                    // Calculate pages with threshold to avoid tiny last pages
+                    const rawPageCount = scrollWidth / width;
+                    const wholePages = Math.floor(rawPageCount);
+                    const remainder = rawPageCount - wholePages;
+
+                    // If the remainder is less than 10% of a page, don't count it as a separate page
+                    const threshold = 0.1; // 10% threshold
+                    const pageCount = remainder < threshold ? wholePages : Math.ceil(rawPageCount);
+
+                    console.log('Page calculation:', { rawPageCount, wholePages, remainder, threshold, finalPageCount: pageCount });
+
+                    // Also store the actual content width for better scrolling
+                    const actualContentWidth = scrollWidth;
+                    const adjustedPageWidth = pageCount > 1 ? actualContentWidth / pageCount : width;
+
+                    iframes[chapterIndex].pages = Math.max(1, pageCount);
                     iframes[chapterIndex].ready = true;
+                    iframes[chapterIndex].pageWidth = width; // Keep original width for layout
+                    iframes[chapterIndex].adjustedPageWidth = adjustedPageWidth; // For scrolling
+                    iframes[chapterIndex].contentWidth = actualContentWidth;
 
                     if (chapterIndex === currentChapter) {
-                        totalPagesInChapter = pageCount;
+                        totalPagesInChapter = Math.max(1, pageCount);
                         updatePageIndicator();
                         showPage(0);
+                        reportPageInfo();
                     }
-                }, 100); // Keep short timeout just for layout to settle
+                }, 100);
             }
-
 
             function showChapter(chapterIndex) {
                 console.log('Showing chapter', chapterIndex);
@@ -181,6 +227,7 @@ export const generateHTML = (chapters: { [path: string]: string }, chapterPaths:
                 if (iframes[chapterIndex].ready) {
                     totalPagesInChapter = iframes[chapterIndex].pages;
                     showPage(0);
+                    reportPageInfo();
                 }
             }
 
@@ -188,14 +235,61 @@ export const generateHTML = (chapters: { [path: string]: string }, chapterPaths:
                 const item = iframes[currentChapter];
                 if (!item || !item.ready) return;
 
-                const width = item.container.offsetWidth;
+                // Use dynamic scrolling based on actual content
+                let scrollLeft;
+
+                if (item.pages === 1) {
+                    // Single page, just scroll to start
+                    scrollLeft = 0;
+                } else if (index >= item.pages - 1) {
+                    // Last page - scroll to the very end to show all remaining content
+                    const scrollable = item.iframe.contentWindow.document.scrollingElement || item.iframe.contentDocument.documentElement;
+                    scrollLeft = scrollable.scrollWidth - scrollable.clientWidth;
+                } else {
+                    // Normal page - use proportional scrolling
+                    const progress = index / (item.pages - 1);
+                    const scrollable = item.iframe.contentWindow.document.scrollingElement || item.iframe.contentDocument.documentElement;
+                    const maxScroll = scrollable.scrollWidth - scrollable.clientWidth;
+                    scrollLeft = maxScroll * progress;
+                }
+
+                console.log('Scrolling to page:', index, 'of', item.pages, 'scrollLeft:', scrollLeft);
+
                 item.iframe.contentWindow.scrollTo({
-                    left: width * index,
-                    behavior: 'smooth'
+                    left: Math.round(scrollLeft),
+                    behavior: 'auto'
                 });
 
                 currentPage = index;
                 updatePageIndicator();
+                reportPageInfo();
+            }
+
+            function goToPosition(chapterIndex, pageIndex) {
+                console.log('Going to position:', chapterIndex, pageIndex);
+
+                if (chapterIndex >= 0 && chapterIndex < totalChapters) {
+                    showChapter(chapterIndex);
+
+                    // Wait for chapter to load, then go to specific page
+                    const waitForChapter = () => {
+                        if (iframes[chapterIndex] && iframes[chapterIndex].ready) {
+                            let targetPage = pageIndex;
+
+                            // If page is -1 or invalid, go to last page
+                            if (pageIndex < 0 || pageIndex >= iframes[chapterIndex].pages) {
+                                targetPage = Math.max(0, iframes[chapterIndex].pages - 1);
+                            }
+
+                            showPage(targetPage);
+                        } else {
+                            // Chapter not ready yet, wait a bit more
+                            setTimeout(waitForChapter, 50);
+                        }
+                    };
+
+                    waitForChapter();
+                }
             }
 
             function nextPage() {
@@ -204,7 +298,6 @@ export const generateHTML = (chapters: { [path: string]: string }, chapterPaths:
                 } else if (currentChapter < totalChapters - 1) {
                     showChapter(currentChapter + 1);
                 } else {
-                    // End of chunk — ask React Native to load the next chunk
                     if (window.ReactNativeWebView) {
                         window.ReactNativeWebView.postMessage(JSON.stringify({
                             type: 'loadNextChunk'
@@ -218,16 +311,23 @@ export const generateHTML = (chapters: { [path: string]: string }, chapterPaths:
                     showPage(currentPage - 1);
                 } else if (currentChapter > 0) {
                     showChapter(currentChapter - 1);
+
+                    // Wait for chapter to load, then go to last page
+                    setTimeout(() => {
+                        const item = iframes[currentChapter];
+                        if (item && item.ready) {
+                            showPage(Math.max(0, item.pages - 1));
+                        }
+                    }, 150);
                 } else {
                     // Beginning of chunk — ask native to load previous chunk
                     if (window.ReactNativeWebView) {
                         window.ReactNativeWebView.postMessage(JSON.stringify({
-                            type: 'loadPrevChunkAndGoToEnd'
+                            type: 'loadPrevChunk'
                         }));
                     }
                 }
             }
-
 
             function updatePageIndicator() {
                 document.getElementById('page-indicator').textContent =
@@ -261,7 +361,7 @@ export const generateHTML = (chapters: { [path: string]: string }, chapterPaths:
                 }
             });
 
-            // Also add event listener to handle React Native messages
+            // Handle React Native messages
             document.addEventListener('message', function(e) {
                 try {
                     const data = JSON.parse(e.data);
@@ -273,6 +373,8 @@ export const generateHTML = (chapters: { [path: string]: string }, chapterPaths:
                         prevPage();
                     } else if (data.type === 'goToChapter') {
                         showChapter(data.chapterIndex);
+                    } else if (data.type === 'goToPosition') {
+                        goToPosition(data.chapter, data.page);
                     } else if (data.type === 'refreshContent') {
                         // Clean up old iframes
                         Object.values(iframes).forEach(item => {
@@ -292,6 +394,13 @@ export const generateHTML = (chapters: { [path: string]: string }, chapterPaths:
             setTimeout(() => {
                 console.log('Initializing...');
                 showChapter(0);
+
+                // Notify React Native that WebView is ready
+                if (window.ReactNativeWebView) {
+                    window.ReactNativeWebView.postMessage(JSON.stringify({
+                        type: 'webViewReady'
+                    }));
+                }
             }, 100);
         </script>
     </body>
