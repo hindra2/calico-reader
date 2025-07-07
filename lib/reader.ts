@@ -34,7 +34,7 @@ export class ReaderManager {
         bookKey: string,
         state: ReaderState,
         setState: (updater: (prev: ReaderState) => ReaderState) => void,
-        webViewRef?: any,
+        webViewRef: any,
     ) {
         this.bookKey = bookKey;
         this.state = state;

@@ -16,7 +16,6 @@ const { width, height } = Dimensions.get('window');
 const Reader: React.FC<EpubReaderProps> = ({ bookKey, onTapMiddle }) => {
     const webViewRef = useRef<WebView>(null);
     const readerManagerRef = useRef<ReaderManager | null>(null);
-    const insets = useSafeAreaInsets();
 
     const [webViewKey, setWebViewKey] = useState(0);
 
