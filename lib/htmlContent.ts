@@ -203,6 +203,13 @@ export const generateHTML = (chapters: { [path: string]: string }, chapterPaths:
                     showPage(currentPage + 1);
                 } else if (currentChapter < totalChapters - 1) {
                     showChapter(currentChapter + 1);
+                } else {
+                    // End of chunk — ask React Native to load the next chunk
+                    if (window.ReactNativeWebView) {
+                        window.ReactNativeWebView.postMessage(JSON.stringify({
+                            type: 'loadNextChunk'
+                        }));
+                    }
                 }
             }
 
@@ -211,8 +218,16 @@ export const generateHTML = (chapters: { [path: string]: string }, chapterPaths:
                     showPage(currentPage - 1);
                 } else if (currentChapter > 0) {
                     showChapter(currentChapter - 1);
+                } else {
+                    // Beginning of chunk — ask native to load previous chunk
+                    if (window.ReactNativeWebView) {
+                        window.ReactNativeWebView.postMessage(JSON.stringify({
+                            type: 'loadPrevChunkAndGoToEnd'
+                        }));
+                    }
                 }
             }
+
 
             function updatePageIndicator() {
                 document.getElementById('page-indicator').textContent =
