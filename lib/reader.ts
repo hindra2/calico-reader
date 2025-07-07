@@ -65,7 +65,6 @@ export class ReaderManager {
         }
     }
 
-    // Fixed: Added missing message handlers
     handleWebViewMessage(message: string): void {
         try {
             const data = JSON.parse(message);
@@ -74,7 +73,7 @@ export class ReaderManager {
                 this.setState(prev => ({
                     ...prev,
                     currChapter: data.currentChapter,
-                    currPage: data.currentPage - 1, // Convert from 1-based to 0-based
+                    currPage: data.currentPage - 1,
                     currChapterPath: data.chapterPath,
                     totalChapters: data.totalChapters,
                     totalPagesInChapter: data.totalPagesInChapter,
@@ -130,13 +129,11 @@ export class ReaderManager {
             const chunkKey = chunkKeys[chunkIndex];
             const chapterPaths = bookMetadata.chunks[chunkKey];
 
-            // Check if we have cached content for this chunk
             let chapterContents = this.state.chunkCache.get(chunkIndex);
 
             if (!chapterContents) {
                 chapterContents = await parseChunk(bookMetadata.path, chapterPaths);
 
-                // Cache the content
                 this.setState(prev => {
                     const newCache = new Map(prev.chunkCache);
                     newCache.set(chunkIndex, chapterContents!);
@@ -156,7 +153,6 @@ export class ReaderManager {
                 totalPagesInChapter: 0,
             }));
 
-            // Fixed: Notify WebView of content change after state update
             setTimeout(() => {
                 this.notifyContentRefresh();
             }, 100);
@@ -168,7 +164,6 @@ export class ReaderManager {
         }
     }
 
-    // Fixed: Added WebView content refresh notification
     private notifyContentRefresh(): void {
         if (this.webViewRef?.current) {
             this.webViewRef.current.postMessage(
@@ -200,7 +195,6 @@ export class ReaderManager {
 
         await this.loadChunkContent(prevChunkIndex);
 
-        // Fixed: Navigate to last chapter of previous chunk
         setTimeout(() => {
             if (this.webViewRef?.current) {
                 this.webViewRef.current.postMessage(
@@ -216,7 +210,6 @@ export class ReaderManager {
         return true;
     }
 
-    // Helper method to get current chapter position
     getCurrentPosition(): ChapterPosition {
         return {
             chunk: this.state.currChunk,
@@ -226,13 +219,11 @@ export class ReaderManager {
         };
     }
 
-    // Helper method to save reading position
     savePosition(): void {
         const position = this.getCurrentPosition();
         storage.set(`position:${this.bookKey}`, JSON.stringify(position));
     }
 
-    // Helper method to load saved position
     loadSavedPosition(): ChapterPosition | null {
         try {
             const raw = storage.getString(`position:${this.bookKey}`);
@@ -242,16 +233,13 @@ export class ReaderManager {
         }
     }
 
-    // Fixed: Added position restoration method
     async restorePosition(): Promise<void> {
         const savedPosition = this.loadSavedPosition();
         if (savedPosition && this.webViewRef?.current) {
-            // If saved position is in a different chunk, load that chunk first
             if (savedPosition.chunk !== this.state.currChunk) {
                 await this.loadChunkContent(savedPosition.chunk);
             }
 
-            // Navigate to the saved position
             setTimeout(() => {
                 if (this.webViewRef?.current) {
                     this.webViewRef.current.postMessage(

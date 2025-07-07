@@ -18,12 +18,7 @@ const Reader: React.FC<EpubReaderProps> = ({ bookKey, onTapMiddle }) => {
     const readerManagerRef = useRef<ReaderManager | null>(null);
     const insets = useSafeAreaInsets();
 
-    // Add a key to force WebView re-render when content changes
     const [webViewKey, setWebViewKey] = useState(0);
-
-    // Calculate actual available space
-    const availableWidth = width;
-    const availableHeight = height - insets.top;
 
     const [state, setState] = useState<ReaderState>({
         chunkCache: new Map(),
@@ -40,21 +35,17 @@ const Reader: React.FC<EpubReaderProps> = ({ bookKey, onTapMiddle }) => {
         metadata: null,
     });
 
-    // Initialize reader
     useEffect(() => {
         readerManagerRef.current = new ReaderManager(bookKey, state, setState, webViewRef);
         readerManagerRef.current.loadDocument();
     }, [bookKey]);
 
-    // Force WebView refresh when content changes
     useEffect(() => {
         if (Object.keys(state.chapterContents).length > 0 && state.chapterPaths.length > 0) {
-            // Force WebView to reload with new content
             setWebViewKey(prev => prev + 1);
         }
     }, [state.chapterContents, state.chapterPaths]);
 
-    // Restore saved position when metadata is loaded
     useEffect(() => {
         const restorePosition = async () => {
             if (readerManagerRef.current && state.metadata && !state.loading) {
@@ -81,14 +72,12 @@ const Reader: React.FC<EpubReaderProps> = ({ bookKey, onTapMiddle }) => {
         [onTapMiddle],
     );
 
-    // Auto-save position when chapter or page changes
     useEffect(() => {
         if (readerManagerRef.current && state.currChapter >= 0 && state.currPage >= 0) {
             readerManagerRef.current.savePosition();
         }
     }, [state.currChapter, state.currPage, state.currChunk]);
 
-    // Memoize the HTML to avoid unnecessary regeneration
     const htmlContent = React.useMemo(() => {
         if (Object.keys(state.chapterContents).length === 0 || state.chapterPaths.length === 0) {
             return '';
