@@ -2,7 +2,7 @@ name: EAS Build
 
 on:
     push:
-        branches: ['*']
+        branches: ['release', 'pre-release']
 
 jobs:
     build:
@@ -39,4 +39,4 @@ jobs:
               uses: actions/upload-artifact@v4
               with:
                   name: android-apk
-                  path: artifacts
+                  path: artifacts/*.apk
